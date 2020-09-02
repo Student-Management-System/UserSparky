@@ -169,8 +169,6 @@ public class UserSparkyWindow extends JFrame {
             return;
         }
 
-        user.setUsername(userDialog.getUsername());
-        
         if (userDialog.getFullName() != null) {
             user.setFullName(userDialog.getFullName());
         }
