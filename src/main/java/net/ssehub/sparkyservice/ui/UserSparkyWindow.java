@@ -96,10 +96,10 @@ public class UserSparkyWindow extends JFrame {
 
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         
-        JButton newUserButton = new JButton("Create new local user");
+        JButton newUserButton = new JButton("Create new user");
         controlPanel.add(newUserButton);
         newUserButton.addActionListener((event) -> {
-            createNewLocalUser();
+            createNewUser();
         });
         
         JButton editUserButton = new JButton("Edit selected user");
@@ -150,7 +150,7 @@ public class UserSparkyWindow extends JFrame {
     
     private void deleteUser(UserDto user) {
         int result = JOptionPane.showConfirmDialog(this, "Really delete user " + user.getUsername(), "Confirm Deletion",
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         
         if (result == JOptionPane.YES_OPTION) {
             try {
@@ -197,7 +197,7 @@ public class UserSparkyWindow extends JFrame {
         reloadUserTable();
     }
     
-    private void createNewLocalUser() {
+    private void createNewUser() {
         UserDialog userDialog = new UserDialog(this, null);
         userDialog.setVisible(true);
         

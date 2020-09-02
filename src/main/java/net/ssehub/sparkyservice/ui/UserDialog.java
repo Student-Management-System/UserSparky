@@ -1,16 +1,19 @@
 package net.ssehub.sparkyservice.ui;
 
-import java.awt.GridLayout;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto.RealmEnum;
@@ -20,6 +23,8 @@ public class UserDialog extends JDialog {
 
     private static final long serialVersionUID = 6777419097542157334L;
 
+    private static final int FIELD_WIDTH = 20;
+    
     private boolean submitted;
     
     private JTextField username;
@@ -37,65 +42,132 @@ public class UserDialog extends JDialog {
         setModal(true);
         setTitle("Create New User");
         
-        JPanel content = new JPanel(new GridLayout(0, 2, 5, 5));
+        JPanel content = new JPanel(new GridBagLayout());
         
-        content.add(new JLabel("Username:", SwingConstants.TRAILING));
-        this.username = new JTextField(10);
+        GridBagConstraints position = new GridBagConstraints();
+        position.insets = new Insets(2, 2, 2, 2);
+        position.fill = GridBagConstraints.HORIZONTAL;
+        position.gridy = 0;
+        
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        content.add(new JLabel("Username:"), position);
+        
+        this.username = new JTextField(FIELD_WIDTH);
         if (user != null) {
             this.username.setText(user.getUsername());
             this.username.setEditable(false);
+            this.username.setToolTipText("Username of existing user cannot be modified");
         }
-        content.add(this.username);
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(this.username, position);
         
-        content.add(new JLabel("Full Name:", SwingConstants.TRAILING));
-        this.fullName = new JTextField(10);
+        position.gridy++;
+        
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        content.add(new JLabel("Full Name:"), position);
+        
+        this.fullName = new JTextField(FIELD_WIDTH);
         if (user != null) {
             this.fullName.setText(user.getFullName());
             if (user.getRealm() == RealmEnum.LDAP) {
                 this.fullName.setEditable(false);
+                this.fullName.setToolTipText("Full name of users in " + RealmEnum.LDAP.getValue() + " realm cannot be modified");
             }
         }
-        content.add(this.fullName);
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(this.fullName, position);
         
-        content.add(new JLabel("Password:", SwingConstants.TRAILING));
-        this.password = new JPasswordField(10);
+        position.gridy++;
+        
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        content.add(new JLabel("Password:"), position);
+        
+        this.password = new JPasswordField(FIELD_WIDTH);
+        this.password.setToolTipText("Overrides existing password if not empty");
         if (user != null && user.getRealm() == RealmEnum.LDAP) {
             this.password.setEditable(false);
+            this.password.setToolTipText("Password of users in " + RealmEnum.LDAP.getValue() + " realm cannot be modified");
         }
-        content.add(this.password);
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(this.password, position);
         
-        content.add(new JLabel("E-Mail:", SwingConstants.TRAILING));
-        this.email = new JTextField(10);
+        position.gridy++;
+        
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        content.add(new JLabel("E-Mail:"), position);
+        
+        this.email = new JTextField(FIELD_WIDTH);
         if (user != null) {
             this.email.setText(user.getSettings().getEmailAddress());
             if (user.getRealm() == RealmEnum.LDAP) {
                 this.email.setEditable(false);
+                this.email.setToolTipText("E-Mail of users in " + RealmEnum.LDAP.getValue() + " realm cannot be modified");
             }
         }
-        content.add(this.email);
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(this.email, position);
         
-        content.add(new JLabel("Role:", SwingConstants.TRAILING));
+        position.gridy++;
+        
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        content.add(new JLabel("Role:"), position);
+        
         this.role = new JComboBox<>(RoleEnum.values());
         if (user != null) {
             this.role.setSelectedItem(user.getRole());
         }
-        content.add(this.role);
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(this.role, position);
+        
+        position.gridy++;
+        
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        content.add(new JLabel("Realm:"), position);
+        
+        JTextField realm = new JTextField(FIELD_WIDTH);
+        realm.setEditable(false);
+        if (user != null) {
+            realm.setText(user.getRealm().getValue());
+            realm.setToolTipText("Realm of existing user cannot be modified");
+        } else {
+            realm.setText(RealmEnum.LOCAL.getValue());
+            realm.setToolTipText("New users can only be created in realm " + RealmEnum.LOCAL.getValue());
+        }
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(realm, position);
+        
+        position.gridy++;
+        
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        position.gridx = 1;
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING, 4, 4));
+        content.add(buttonPanel, position);
+        
         
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener((event) -> {
             dispose();
         });
-        content.add(cancelButton);
+        buttonPanel.add(cancelButton);
         
         JButton okButton = new JButton("Ok");
         okButton.addActionListener((event) -> {
-            submitted = true;
-            dispose();
+            int result = JOptionPane.YES_OPTION;
+            if (getPassword() != null) {
+                result = JOptionPane.showConfirmDialog(this, "Really override existing password?", "Confirm Password Override",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            }
+            
+            if (result == JOptionPane.YES_OPTION) {
+                submitted = true;
+                dispose();
+            }
         });
-        content.add(okButton);
+        buttonPanel.add(okButton);
         
         setContentPane(content);
         pack();
+        setResizable(false);
         setLocationRelativeTo(parent);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }

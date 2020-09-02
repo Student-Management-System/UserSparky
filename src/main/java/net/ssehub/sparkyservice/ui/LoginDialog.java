@@ -1,6 +1,8 @@
 package net.ssehub.sparkyservice.ui;
 
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -19,7 +21,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.io.FileUtils;
@@ -58,34 +59,53 @@ public class LoginDialog extends JDialog implements ActionListener {
         
         LoginSettings settings = loadLoginSettings();
         
-        JPanel content = new JPanel(new GridLayout(0, 2, 5, 5));
+        JPanel content = new JPanel(new GridBagLayout());
         
-        content.add(new JLabel("API URL:", SwingConstants.TRAILING));
+        GridBagConstraints position = new GridBagConstraints();
+        position.insets = new Insets(2, 2, 2, 2);
+        position.fill = GridBagConstraints.HORIZONTAL;
+        position.gridy = 0;
+        
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        content.add(new JLabel("API URL:"), position);
         
         this.apiUrl = new JComboBox<>(settings.getKnownServers());
         this.apiUrl.setEditable(true);
-        content.add(this.apiUrl);
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(this.apiUrl, position);
         
-        content.add(new JLabel("Username:", SwingConstants.TRAILING));
+        position.gridy++;
+        
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        content.add(new JLabel("Username:"), position);
         
         this.username = new JTextField(settings.getUsername(), 10);
         this.username.addActionListener(this);
-        content.add(this.username);
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(this.username, position);
         
-        content.add(new JLabel("Password:", SwingConstants.TRAILING));
+        position.gridy++;
+        
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        content.add(new JLabel("Password:"), position);
         
         this.password = new JPasswordField(10);
         this.password.addActionListener(this);
-        content.add(this.password);
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(this.password, position);
         
-        content.add(new JLabel());
+        position.gridy++;
         
+        position.gridx = 1;
+        position.fill = GridBagConstraints.NONE;
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
         JButton okButton = new JButton("Ok");
         okButton.addActionListener(this);
-        content.add(okButton);
+        content.add(okButton, position);
         
         setContentPane(content);
         pack();
+        setResizable(false);
         setLocationRelativeTo(parent);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         
