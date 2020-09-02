@@ -45,7 +45,7 @@ public class UserSparkyWindow extends JFrame {
     
     public UserSparkyWindow() {
         this.userTableModel = new DefaultTableModel();
-        this.userTableModel.setColumnIdentifiers(new String[] {"Username", "Full Name", "Role", "Realm"});
+        this.userTableModel.setColumnIdentifiers(new String[] {"Username", "Full Name", "E-Mail", "Role", "Realm"});
         this.userTable = new JTable(this.userTableModel);
         UserTableCellRenderer renderer = new UserTableCellRenderer();
         for (int i = 0; i < this.userTable.getColumnModel().getColumnCount(); i++) {
@@ -146,9 +146,12 @@ public class UserSparkyWindow extends JFrame {
                 this.setText(user.getFullName());
                 break;
             case 2:
-                this.setText(user.getRole().getValue());
+                this.setText(user.getSettings().getEmailAddress());
                 break;
             case 3:
+                this.setText(user.getRole().getValue());
+                break;
+            case 4:
                 this.setText(user.getRealm().getValue());
                 break;
             default:
@@ -175,7 +178,7 @@ public class UserSparkyWindow extends JFrame {
         
         try {
             for (UserDto user : userApi.getAllUsers()) {
-                this.userTableModel.addRow(new Object[] {user, user, user, user});
+                this.userTableModel.addRow(new Object[] {user, user, user, user, user});
             }
         } catch (ApiException e) {
             ExceptionDialog.showExceptionDialog(e, this);
@@ -217,6 +220,10 @@ public class UserSparkyWindow extends JFrame {
             user.setPasswordDto(changePassword);
         }
         
+        if (userDialog.getEmail() != null) {
+            user.getSettings().setEmailAddress(userDialog.getEmail());
+        }
+        
         user.setRole(userDialog.getRole());
         
         try {
@@ -248,6 +255,10 @@ public class UserSparkyWindow extends JFrame {
                 ChangePasswordDto changePassword = new ChangePasswordDto();
                 changePassword.setNewPassword(new String(userDialog.getPassword()));
                 user.setPasswordDto(changePassword);
+            }
+            
+            if (userDialog.getEmail() != null) {
+                user.getSettings().setEmailAddress(userDialog.getEmail());
             }
             
             user.setRole(userDialog.getRole());

@@ -28,6 +28,8 @@ public class UserDialog extends JDialog {
     
     private JPasswordField password;
     
+    private JTextField email;
+    
     private JComboBox<RoleEnum> role;
     
     public UserDialog(JFrame parent, UserDto user) {
@@ -61,6 +63,16 @@ public class UserDialog extends JDialog {
             this.password.setEditable(false);
         }
         content.add(this.password);
+        
+        content.add(new JLabel("E-Mail:", SwingConstants.TRAILING));
+        this.email = new JTextField(10);
+        if (user != null) {
+            this.email.setText(user.getSettings().getEmailAddress());
+            if (user.getRealm() == RealmEnum.LDAP) {
+                this.email.setEditable(false);
+            }
+        }
+        content.add(this.email);
         
         content.add(new JLabel("Role:", SwingConstants.TRAILING));
         this.role = new JComboBox<>(RoleEnum.values());
@@ -100,6 +112,11 @@ public class UserDialog extends JDialog {
     public char[] getPassword() {
         char[] password = this.password.getPassword();
         return password.length > 0 ? password : null;
+    }
+    
+    public String getEmail() {
+        String text = this.email.getText().trim();
+        return text.isEmpty() ? null : text;
     }
     
     public RoleEnum getRole() {
