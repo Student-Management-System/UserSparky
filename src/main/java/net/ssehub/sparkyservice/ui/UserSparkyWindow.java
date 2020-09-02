@@ -1,7 +1,6 @@
 package net.ssehub.sparkyservice.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Point;
 import java.awt.event.ActionListener;
@@ -18,8 +17,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 
 import net.ssehub.studentmgmt.sparkyservice_api.ApiClient;
 import net.ssehub.studentmgmt.sparkyservice_api.ApiException;
@@ -41,33 +38,9 @@ public class UserSparkyWindow extends JFrame {
     
     private JTable userTable;
     
-    private DefaultTableModel userTableModel;
+    private UserTableModel userTableModel;
     
     public UserSparkyWindow() {
-        this.userTableModel = new DefaultTableModel();
-        this.userTableModel.setColumnIdentifiers(new String[] {"Username", "Full Name", "E-Mail", "Role", "Realm"});
-        this.userTable = new JTable(this.userTableModel);
-        UserTableCellRenderer renderer = new UserTableCellRenderer();
-        for (int i = 0; i < this.userTable.getColumnModel().getColumnCount(); i++) {
-            this.userTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
-        }
-        
-        this.userTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        this.userTable.addMouseListener(new MouseAdapter() {
-            
-            @Override
-            public void mousePressed(MouseEvent e) {
-                Point location = e.getPoint();
-                int row = userTable.rowAtPoint(location);
-                if (row != -1) {
-                    userTable.setRowSelectionInterval(row, row);
-                } else {
-                    userTable.clearSelection();
-                }
-            }
-            
-        });
-        
         ActionListener editUserAction = (event) -> {
             UserDto selectedUser = getSelectedUser();
             if (selectedUser != null) {
@@ -82,7 +55,6 @@ public class UserSparkyWindow extends JFrame {
         };
         
         JPopupMenu userTablePopup = new JPopupMenu();
-        userTable.setComponentPopupMenu(userTablePopup);
         
         JMenuItem userTablePopupEditUser = new JMenuItem("Edit user");
         userTablePopupEditUser.addActionListener(editUserAction);
@@ -91,6 +63,32 @@ public class UserSparkyWindow extends JFrame {
         JMenuItem userTablePopupDeleteUser = new JMenuItem("Delete user");
         userTablePopupDeleteUser.addActionListener(deleteUserAction);
         userTablePopup.add(userTablePopupDeleteUser);
+        
+        this.userTableModel = new UserTableModel();
+        this.userTable = new JTable(this.userTableModel);
+        
+        this.userTable.setAutoCreateRowSorter(true);
+        this.userTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        this.userTable.addMouseListener(new MouseAdapter() {
+            
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    Point location = e.getPoint();
+                    
+                    int row = userTable.rowAtPoint(location);
+                    int column = userTable.columnAtPoint(location);
+                    
+                    if (row != -1) {
+                        userTable.changeSelection(row, column, false, false);
+                        userTablePopup.show(userTable, e.getX(), e.getY());
+                    } else {
+                        userTable.clearSelection();
+                    }
+                }
+            }
+            
+        });
         
         JScrollPane tableScrollPane = new JScrollPane(userTable);
 
@@ -127,58 +125,21 @@ public class UserSparkyWindow extends JFrame {
         setLocationRelativeTo(null);
     }
     
-    private static class UserTableCellRenderer extends DefaultTableCellRenderer {
-
-        private static final long serialVersionUID = -1710052237034920310L;
-        
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-                int row, int column) {
-            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            
-            UserDto user = (UserDto) value;
-            
-            switch (column) {
-            case 0:
-                this.setText(user.getUsername());
-                break;
-            case 1:
-                this.setText(user.getFullName());
-                break;
-            case 2:
-                this.setText(user.getSettings().getEmailAddress());
-                break;
-            case 3:
-                this.setText(user.getRole().getValue());
-                break;
-            case 4:
-                this.setText(user.getRealm().getValue());
-                break;
-            default:
-                this.setText("");
-                break;
-            }
-            
-            return this;
-        }
-    }
-    
     private UserDto getSelectedUser() {
         UserDto result = null;
         if (userTable.getSelectedColumn() != -1) {
-            result = (UserDto) this.userTableModel.getValueAt(userTable.getSelectedRow(), 0);
+            int modelIndex = userTable.getRowSorter().convertRowIndexToModel(userTable.getSelectedRow());
+            result = this.userTableModel.getUserInRow(modelIndex);
         }
         return result;
     }
     
     private void reloadUserTable() {
-        while (this.userTableModel.getRowCount() > 0) {
-            this.userTableModel.removeRow(this.userTableModel.getRowCount() - 1);
-        }
+        this.userTableModel.clearUsers();
         
         try {
             for (UserDto user : userApi.getAllUsers()) {
-                this.userTableModel.addRow(new Object[] {user, user, user, user, user});
+                this.userTableModel.addUser(user);
             }
         } catch (ApiException e) {
             ExceptionDialog.showExceptionDialog(e, this);
