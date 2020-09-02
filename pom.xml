@@ -35,8 +35,7 @@
 	<build>
 		<resources></resources>
 		<testResources></testResources>
-		<testSourceDirectory></testSourceDirectory>
-
+		
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
