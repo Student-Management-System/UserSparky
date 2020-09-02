@@ -6,6 +6,8 @@
 	<artifactId>user-sparky</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>UserSparky</name>
+	<description>A small tool to manage users in the SparkyService.</description>
+	<url>https://github.com/Student-Management-System/UserSparky</url>
 
 	<organization>
 		<name>Software Systems Engineering, University of Hildesheim</name>
@@ -18,6 +20,12 @@
 			<url>https://www.apache.org/licenses/LICENSE-2.0.html</url>
 		</license>
 	</licenses>
+
+	<scm>
+		<connection>scm:git:https://github.com/Student-Management-System/UserSparky.git</connection>
+		<developerConnection>scm:git:https://github.com/Student-Management-System/UserSparky.git</developerConnection>
+		<url>https://github.com/Student-Management-System/UserSparky</url>
+	</scm>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -88,4 +96,12 @@
 			<version>2.7</version>
 		</dependency>
 	</dependencies>
+
+	<distributionManagement>
+		<repository>
+			<id>student-management-system-github</id>
+			<name>Student-Management-System GitHub Packages</name>
+			<url>https://maven.pkg.github.com/student-management-system/mavenpackages</url>
+		</repository>
+	</distributionManagement>
 </project>
