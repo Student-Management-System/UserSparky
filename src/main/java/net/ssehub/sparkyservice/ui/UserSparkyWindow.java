@@ -35,6 +35,8 @@ public class UserSparkyWindow extends JFrame {
 
     private static final long serialVersionUID = 4487251343400436988L;
     
+    private static final String BASE_TITLE = "UserSparky";
+    
     private UserControllerApi userApi;
     
     private JTable userTable;
@@ -119,7 +121,7 @@ public class UserSparkyWindow extends JFrame {
         content.add(tableScrollPane, BorderLayout.CENTER);
         content.add(controlPanel, BorderLayout.SOUTH);
         
-        setTitle("UserSparky");
+        setTitle(BASE_TITLE);
         setSize(800, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -281,6 +283,7 @@ public class UserSparkyWindow extends JFrame {
             apiClient.setAccessToken(token.getToken());
             
             reloadUserTable();
+            setTitle(BASE_TITLE + " - " + loginDialog.getApiUrl());
             success = true;
         } catch (ApiException | IllegalArgumentException e) {
             ExceptionDialog.showExceptionDialog(e, this);
