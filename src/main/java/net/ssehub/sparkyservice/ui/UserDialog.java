@@ -153,7 +153,7 @@ public class UserDialog extends JDialog {
         JButton okButton = new JButton("Ok");
         okButton.addActionListener((event) -> {
             int result = JOptionPane.YES_OPTION;
-            if (getPassword() != null) {
+            if (user != null && getPassword() != null) {
                 result = JOptionPane.showConfirmDialog(this, "Really override existing password?", "Confirm Password Override",
                         JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             }
