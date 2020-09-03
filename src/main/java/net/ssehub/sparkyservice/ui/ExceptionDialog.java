@@ -57,9 +57,11 @@ public class ExceptionDialog extends JDialog {
             ApiException apiException = (ApiException) exception;
             stacktrace.append("ApiException").append('\n');
             stacktrace.append("\tcode: ").append(String.valueOf(apiException.getCode())).append('\n');
-            stacktrace.append("\trespondeBody:").append('\n');
-            for (String line : apiException.getResponseBody().split("\n")) {
-                stacktrace.append("\t\t").append(line).append('\n');
+            if (apiException.getResponseBody() != null) {
+                stacktrace.append("\trespondeBody:").append('\n');
+                for (String line : apiException.getResponseBody().split("\n")) {
+                    stacktrace.append("\t\t").append(line).append('\n');
+                }
             }
         }
         
