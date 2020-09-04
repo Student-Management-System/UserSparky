@@ -13,6 +13,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -24,7 +25,6 @@ import net.ssehub.studentmgmt.sparkyservice_api.ApiClient;
 import net.ssehub.studentmgmt.sparkyservice_api.ApiException;
 import net.ssehub.studentmgmt.sparkyservice_api.api.AuthControllerApi;
 import net.ssehub.studentmgmt.sparkyservice_api.api.UserControllerApi;
-import net.ssehub.studentmgmt.sparkyservice_api.model.AuthenticationInfoDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.ChangePasswordDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.CredentialsDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.TokenDto;
@@ -41,6 +41,8 @@ public class UserSparkyWindow extends JFrame {
     private JTable userTable;
     
     private UserTableModel userTableModel;
+    
+    private JProgressBar progressbar;
     
     public UserSparkyWindow() {
         ActionListener editUserAction = (event) -> {
@@ -116,6 +118,9 @@ public class UserSparkyWindow extends JFrame {
             reloadUserTable();
         });
         
+        progressbar = new JProgressBar(JProgressBar.HORIZONTAL);
+        controlPanel.add(progressbar);
+        
         JPanel content = new JPanel(new BorderLayout(5, 5));
         setContentPane(content);
         content.add(tableScrollPane, BorderLayout.CENTER);
@@ -127,6 +132,14 @@ public class UserSparkyWindow extends JFrame {
         setLocationRelativeTo(null);
     }
     
+    private void onOperationStarted() {
+        progressbar.setIndeterminate(true);
+    }
+    
+    private void onOperationStopped() {
+        progressbar.setIndeterminate(false);
+    }
+    
     private UserDto getSelectedUser() {
         UserDto result = null;
         if (userTable.getSelectedColumn() != -1) {
@@ -136,16 +149,55 @@ public class UserSparkyWindow extends JFrame {
         return result;
     }
     
+    private interface ApiOperation<T> {
+        public T execute() throws ApiException, IllegalArgumentException;
+    }
+    
+    private interface ApiSuccessCallback<T> {
+        public void onSuccess(T apiResult);
+    }
+    
+    private interface ApiFailureCallback {
+        public void onFailure();
+    }
+    
+    private <T> void runApiOperationAsync(ApiOperation<T> apiOperation,
+            ApiSuccessCallback<T> successCallback, ApiFailureCallback failureCallback) {
+        
+        onOperationStarted();
+        
+        new Thread(() -> {
+            try {
+                T result = apiOperation.execute();
+                SwingUtilities.invokeLater(() -> {
+                    onOperationStopped();
+                    successCallback.onSuccess(result);
+                });
+                
+            } catch (ApiException | IllegalArgumentException e) {
+                onOperationStopped();
+                ExceptionDialog.showExceptionDialog(e, this);
+                if (failureCallback != null) {
+                    failureCallback.onFailure();
+                }
+            }
+        }).start();
+    }
+    
+    private <T> void runApiOperationAsync(ApiOperation<T> apiOperation, ApiSuccessCallback<T> successCallback) {
+        runApiOperationAsync(apiOperation, successCallback, null);
+    }
+    
     private void reloadUserTable() {
         this.userTableModel.clearUsers();
         
-        try {
-            for (UserDto user : userApi.getAllUsers()) {
-                this.userTableModel.addUser(user);
-            }
-        } catch (ApiException e) {
-            ExceptionDialog.showExceptionDialog(e, this);
-        }
+        runApiOperationAsync(
+            () -> userApi.getAllUsers(),
+            (userList) -> {
+                for (UserDto user : userList) {
+                    this.userTableModel.addUser(user);
+                }
+            });
     }
     
     private void deleteUser(UserDto user) {
@@ -153,13 +205,13 @@ public class UserSparkyWindow extends JFrame {
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         
         if (result == JOptionPane.YES_OPTION) {
-            try {
-                userApi.deleteUser(user.getRealm().getValue(), user.getUsername());
-            } catch (ApiException e) {
-                ExceptionDialog.showExceptionDialog(e, this);
-            }
-            
-            reloadUserTable();
+            runApiOperationAsync(
+                () -> {
+                    userApi.deleteUser(user.getRealm().getValue(), user.getUsername());
+                    return null;
+                },
+                (ignored) -> reloadUserTable()
+            );
         }
     }
     
@@ -187,14 +239,11 @@ public class UserSparkyWindow extends JFrame {
         
         user.setRole(userDialog.getRole());
         
-        try {
-            userApi.editUser(user);
-            
-        } catch (ApiException e) {
-            ExceptionDialog.showExceptionDialog(e, this);
-        }
         
-        reloadUserTable();
+        runApiOperationAsync(
+            () -> userApi.editUser(user),
+            (ignored) -> reloadUserTable()
+        );
     }
     
     private void createNewUser() {
@@ -205,35 +254,34 @@ public class UserSparkyWindow extends JFrame {
             return;
         }
         
-        try {
-            UserDto user = userApi.addLocalUser(userDialog.getUsername());
-            
-            if (userDialog.getFullName() != null) {
-                user.setFullName(userDialog.getFullName());
+        runApiOperationAsync(
+            () -> userApi.addLocalUser(userDialog.getUsername()),
+            (user) -> {
+                if (userDialog.getFullName() != null) {
+                    user.setFullName(userDialog.getFullName());
+                }
+                
+                if (userDialog.getPassword() != null) {
+                    ChangePasswordDto changePassword = new ChangePasswordDto();
+                    changePassword.setNewPassword(new String(userDialog.getPassword()));
+                    user.setPasswordDto(changePassword);
+                }
+                
+                if (userDialog.getEmail() != null) {
+                    user.getSettings().setEmailAddress(userDialog.getEmail());
+                }
+                
+                user.setRole(userDialog.getRole());
+                
+                runApiOperationAsync(
+                    () -> userApi.editUser(user),
+                    (ignored) -> reloadUserTable()
+                );
             }
-            
-            if (userDialog.getPassword() != null) {
-                ChangePasswordDto changePassword = new ChangePasswordDto();
-                changePassword.setNewPassword(new String(userDialog.getPassword()));
-                user.setPasswordDto(changePassword);
-            }
-            
-            if (userDialog.getEmail() != null) {
-                user.getSettings().setEmailAddress(userDialog.getEmail());
-            }
-            
-            user.setRole(userDialog.getRole());
-            
-            userApi.editUser(user);
-            
-        } catch (ApiException e) {
-            ExceptionDialog.showExceptionDialog(e, this);
-        }
-        
-        reloadUserTable();
+        );
     }
     
-    public boolean login() {
+    public void login() {
         LoginDialog loginDialog = new LoginDialog(this);
         loginDialog.setVisible(true);
         
@@ -246,22 +294,17 @@ public class UserSparkyWindow extends JFrame {
         credentials.setUsername(loginDialog.getUsername());
         credentials.setPassword(new String(loginDialog.getPassword()));
         
-        boolean success = false;
-        
-        try {
-            AuthenticationInfoDto authResult = authApi.authenticate(credentials);
-            
-            TokenDto token = authResult.getToken();
-            apiClient.setAccessToken(token.getToken());
-            
-            reloadUserTable();
-            setTitle(BASE_TITLE + " - " + loginDialog.getApiUrl());
-            success = true;
-        } catch (ApiException | IllegalArgumentException e) {
-            ExceptionDialog.showExceptionDialog(e, this);
-        }
-        
-        return success;
+        runApiOperationAsync(
+            () -> authApi.authenticate(credentials),
+            (authResult) -> {
+                TokenDto token = authResult.getToken();
+                apiClient.setAccessToken(token.getToken());
+                
+                setTitle(BASE_TITLE + " - " + loginDialog.getApiUrl());
+                reloadUserTable();
+            },
+            () -> login() // on failure, try login again
+        );
     }
     
     public static void main(String[] args) {
@@ -274,11 +317,7 @@ public class UserSparkyWindow extends JFrame {
             
             UserSparkyWindow window = new UserSparkyWindow();
             window.setVisible(true);
-            
-            boolean success;
-            do {
-                success = window.login();
-            } while (!success);
+            window.login();
         });
     }
     
