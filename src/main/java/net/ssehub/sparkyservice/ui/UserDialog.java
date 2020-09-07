@@ -69,10 +69,6 @@ public class UserDialog extends JDialog {
         this.fullName = new JTextField(FIELD_WIDTH);
         if (user != null) {
             this.fullName.setText(user.getFullName());
-            if (user.getRealm() == RealmEnum.LDAP) {
-                this.fullName.setEditable(false);
-                this.fullName.setToolTipText("Full name of users in " + RealmEnum.LDAP.getValue() + " realm cannot be modified");
-            }
         }
         position.anchor = GridBagConstraints.CENTER;
         content.add(this.fullName, position);
@@ -99,10 +95,6 @@ public class UserDialog extends JDialog {
         this.email = new JTextField(FIELD_WIDTH);
         if (user != null) {
             this.email.setText(user.getSettings().getEmailAddress());
-            if (user.getRealm() == RealmEnum.LDAP) {
-                this.email.setEditable(false);
-                this.email.setToolTipText("E-Mail of users in " + RealmEnum.LDAP.getValue() + " realm cannot be modified");
-            }
         }
         position.anchor = GridBagConstraints.CENTER;
         content.add(this.email, position);
