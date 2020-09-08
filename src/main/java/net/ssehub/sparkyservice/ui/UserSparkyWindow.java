@@ -29,6 +29,7 @@ import net.ssehub.studentmgmt.sparkyservice_api.model.ChangePasswordDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.CredentialsDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.TokenDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto;
+import net.ssehub.studentmgmt.sparkyservice_api.model.UsernameDto;
 
 public class UserSparkyWindow extends JFrame {
 
@@ -239,7 +240,6 @@ public class UserSparkyWindow extends JFrame {
         
         user.setRole(userDialog.getRole());
         
-        
         runApiOperationAsync(
             () -> userApi.editUser(user),
             (ignored) -> reloadUserTable()
@@ -254,8 +254,11 @@ public class UserSparkyWindow extends JFrame {
             return;
         }
         
+        UsernameDto username = new UsernameDto();
+        username.setUsername(userDialog.getUsername());
+        
         runApiOperationAsync(
-            () -> userApi.addLocalUser(userDialog.getUsername()),
+            () -> userApi.createLocalUser(username),
             (user) -> {
                 if (userDialog.getFullName() != null) {
                     user.setFullName(userDialog.getFullName());
