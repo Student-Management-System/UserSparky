@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -295,7 +296,10 @@ public class UserSparkyWindow extends JFrame {
         
         CredentialsDto credentials = new CredentialsDto();
         credentials.setUsername(loginDialog.getUsername());
-        credentials.setPassword(new String(loginDialog.getPassword()));
+        
+        char[] password = loginDialog.getPassword();
+        credentials.setPassword(new String(password)); // sadly, the swagger API requires a String
+        Arrays.fill(password, (char) 0);
         
         runApiOperationAsync(
             () -> authApi.authenticate(credentials),
