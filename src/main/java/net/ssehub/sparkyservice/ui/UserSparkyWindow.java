@@ -3,6 +3,9 @@ package net.ssehub.sparkyservice.ui;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -28,8 +31,8 @@ import net.ssehub.studentmgmt.sparkyservice_api.api.AuthControllerApi;
 import net.ssehub.studentmgmt.sparkyservice_api.api.UserControllerApi;
 import net.ssehub.studentmgmt.sparkyservice_api.model.ChangePasswordDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.CredentialsDto;
-import net.ssehub.studentmgmt.sparkyservice_api.model.TokenDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto;
+import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto.RealmEnum;
 import net.ssehub.studentmgmt.sparkyservice_api.model.UsernameDto;
 
 public class UserSparkyWindow extends JFrame {
@@ -37,6 +40,12 @@ public class UserSparkyWindow extends JFrame {
     private static final long serialVersionUID = 4487251343400436988L;
     
     private static final String BASE_TITLE = "UserSparky";
+    
+    private ApiClient apiClient;
+    
+    private String apiToken;
+    
+    private AuthControllerApi authApi;
     
     private UserControllerApi userApi;
     
@@ -100,21 +109,37 @@ public class UserSparkyWindow extends JFrame {
 
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         
-        JButton newUserButton = new JButton("Create new user");
+        JButton newUserButton = new JButton("Create User");
+        newUserButton.setToolTipText("Opens a dialog to create a new user in the " + RealmEnum.LOCAL.getValue() + " realm");
         controlPanel.add(newUserButton);
         newUserButton.addActionListener((event) -> {
             createNewUser();
         });
         
-        JButton editUserButton = new JButton("Edit selected user");
+        JButton editUserButton = new JButton("Edit User");
+        editUserButton.setToolTipText("Opens a dialog to edit the currently selected user");
         controlPanel.add(editUserButton);
         editUserButton.addActionListener(editUserAction);
         
-        JButton deleteUserButton = new JButton("Delete selected user");
+        JButton deleteUserButton = new JButton("Delete User");
+        deleteUserButton.setToolTipText("Deletes the currently selected user");
         controlPanel.add(deleteUserButton);
         deleteUserButton.addActionListener(deleteUserAction);
         
-        JButton reloadButton = new JButton("Reload user list");
+        JButton copyTokenButton = new JButton("Copy Token");
+        copyTokenButton.setToolTipText("Copies the API access token to the clipbloard");
+        controlPanel.add(copyTokenButton);
+        copyTokenButton.addActionListener((event) -> {
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            try {
+                clipboard.setContents(new StringSelection(this.apiToken), null);
+            } catch (IllegalStateException e) {
+                ExceptionDialog.showExceptionDialog(e, this);
+            }
+        });
+        
+        JButton reloadButton = new JButton("Reload");
+        reloadButton.setToolTipText("Reloads the user list");
         controlPanel.add(reloadButton);
         reloadButton.addActionListener((event) -> {
             reloadUserTable();
@@ -285,14 +310,18 @@ public class UserSparkyWindow extends JFrame {
         );
     }
     
+    private void createNewClients(String apiUrl) {
+        this.apiClient = new ApiClient();
+        this.apiClient.setBasePath(apiUrl);
+        this.authApi = new AuthControllerApi(apiClient);
+        this.userApi = new UserControllerApi(apiClient);
+    }
+    
     public void login() {
         LoginDialog loginDialog = new LoginDialog(this);
         loginDialog.setVisible(true);
         
-        ApiClient apiClient = new ApiClient();
-        apiClient.setBasePath(loginDialog.getApiUrl());
-        AuthControllerApi authApi = new AuthControllerApi(apiClient);
-        this.userApi = new UserControllerApi(apiClient);
+        createNewClients(loginDialog.getApiUrl());
         
         CredentialsDto credentials = new CredentialsDto();
         credentials.setUsername(loginDialog.getUsername());
@@ -302,10 +331,10 @@ public class UserSparkyWindow extends JFrame {
         Arrays.fill(password, (char) 0);
         
         runApiOperationAsync(
-            () -> authApi.authenticate(credentials),
+            () -> this.authApi.authenticate(credentials),
             (authResult) -> {
-                TokenDto token = authResult.getToken();
-                apiClient.setAccessToken(token.getToken());
+                this.apiToken = authResult.getToken().getToken();
+                this.apiClient.setAccessToken(this.apiToken);
                 
                 setTitle(BASE_TITLE + " - " + loginDialog.getApiUrl());
                 reloadUserTable();
