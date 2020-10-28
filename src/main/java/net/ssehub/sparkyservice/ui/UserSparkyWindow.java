@@ -7,12 +7,15 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -20,11 +23,16 @@ import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.TableRowSorter;
 
+import net.ssehub.sparkyservice.ui.UserTableModel.Column;
 import net.ssehub.studentmgmt.sparkyservice_api.ApiClient;
 import net.ssehub.studentmgmt.sparkyservice_api.ApiException;
 import net.ssehub.studentmgmt.sparkyservice_api.api.AuthControllerApi;
@@ -52,6 +60,8 @@ public class UserSparkyWindow extends JFrame {
     private JTable userTable;
     
     private UserTableModel userTableModel;
+    
+    private TableRowSorter<UserTableModel> userTableSorter;
     
     private JProgressBar progressbar;
     
@@ -82,7 +92,8 @@ public class UserSparkyWindow extends JFrame {
         this.userTableModel = new UserTableModel();
         this.userTable = new JTable(this.userTableModel);
         
-        this.userTable.setAutoCreateRowSorter(true);
+        this.userTableSorter = new TableRowSorter<UserTableModel>(this.userTableModel);
+        this.userTable.setRowSorter(userTableSorter);
         this.userTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         this.userTable.addMouseListener(new MouseAdapter() {
             
@@ -148,8 +159,54 @@ public class UserSparkyWindow extends JFrame {
         progressbar = new JProgressBar(JProgressBar.HORIZONTAL);
         controlPanel.add(progressbar);
         
+        JPanel filterPanel = new JPanel(new BorderLayout(5, 5));
+        filterPanel.add(new JLabel("Filter:"), BorderLayout.LINE_START);
+        JTextField filterField = new JTextField();
+        filterPanel.add(filterField, BorderLayout.CENTER);
+        filterField.setToolTipText("Filters in columns " + Column.USERNAME.getName() + ", "
+                    + Column.FULL_NAME.getName() + ", and " + Column.EMAIL.getName() + " (case-insensitive)");
+        filterField.getDocument().addDocumentListener(new DocumentListener() {
+            
+            private void updateFilter() {
+                String filterStr = filterField.getText().trim();
+                if (!filterStr.isEmpty()) {
+                    userTableSorter.setRowFilter(new SubstringRowFilter(filterStr));
+                } else {
+                    userTableSorter.setRowFilter(null);
+                }
+            }
+            
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateFilter();
+            }
+            
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateFilter();
+            }
+            
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateFilter();
+            }
+            
+        });
+        filterField.addKeyListener(new KeyAdapter() {
+            
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (!e.isConsumed() && e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    filterField.setText("");
+                    e.consume();
+                }
+            }
+            
+        });
+        
         JPanel content = new JPanel(new BorderLayout(5, 5));
         setContentPane(content);
+        content.add(filterPanel, BorderLayout.NORTH);
         content.add(tableScrollPane, BorderLayout.CENTER);
         content.add(controlPanel, BorderLayout.SOUTH);
         
@@ -170,7 +227,7 @@ public class UserSparkyWindow extends JFrame {
     private UserDto getSelectedUser() {
         UserDto result = null;
         if (userTable.getSelectedColumn() != -1) {
-            int modelIndex = userTable.getRowSorter().convertRowIndexToModel(userTable.getSelectedRow());
+            int modelIndex = this.userTableSorter.convertRowIndexToModel(userTable.getSelectedRow());
             result = this.userTableModel.getUserInRow(modelIndex);
         }
         return result;

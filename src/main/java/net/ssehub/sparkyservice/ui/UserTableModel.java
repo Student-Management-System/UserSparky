@@ -11,7 +11,7 @@ class UserTableModel extends AbstractTableModel {
     
     private static final long serialVersionUID = -3498830195696647078L;
 
-    private enum Column {
+    public enum Column {
         
         USERNAME(0, "Username"),
         FULL_NAME(1, "Full Name"),
@@ -32,6 +32,10 @@ class UserTableModel extends AbstractTableModel {
         
         public String getName() {
             return name;
+        }
+        
+        public int getIndex() {
+            return index;
         }
         
         public static Column getByIndex(int index) {
