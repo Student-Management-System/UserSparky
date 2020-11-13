@@ -90,6 +90,11 @@
 			<version>1.0.0</version>
 		</dependency>
 		<dependency>
+			<groupId>net.ssehub.studentmgmt</groupId>
+			<artifactId>backend_api</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.7</version>
