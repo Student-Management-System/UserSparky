@@ -15,6 +15,8 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import org.threeten.bp.LocalDate;
+
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto.RealmEnum;
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto.RoleEnum;
@@ -34,6 +36,8 @@ public class UserDialog extends JDialog {
     private JPasswordField password;
     
     private JTextField email;
+    
+    private JTextField expirationDate;
     
     private JComboBox<RoleEnum> role;
     
@@ -98,6 +102,15 @@ public class UserDialog extends JDialog {
         }
         position.anchor = GridBagConstraints.CENTER;
         content.add(this.email, position);
+        
+        position.gridy++;
+        
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(new JLabel("Expiration Date"), position);
+        
+        this.expirationDate = new JTextField("z.B. 2021-01-31",FIELD_WIDTH);
+        position.anchor = GridBagConstraints.CENTER;
+        content.add(this.expirationDate, position);
         
         position.gridy++;
         
@@ -181,6 +194,11 @@ public class UserDialog extends JDialog {
     public String getEmail() {
         String text = this.email.getText().trim();
         return text.isEmpty() ? null : text;
+    }
+    
+    public LocalDate getExpirationDate() {
+        LocalDate expirationDate = LocalDate.parse(this.expirationDate.getText());
+        return expirationDate;
     }
     
     public RoleEnum getRole() {

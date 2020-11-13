@@ -321,6 +321,10 @@ public class UserSparkyWindow extends JFrame {
             user.getSettings().setEmailAddress(userDialog.getEmail());
         }
         
+        if (userDialog.getExpirationDate() != null) {
+            user.setExpirationDate(userDialog.getExpirationDate());
+        }
+        
         user.setRole(userDialog.getRole());
         
         runApiOperationAsync(
@@ -355,6 +359,10 @@ public class UserSparkyWindow extends JFrame {
                 
                 if (userDialog.getEmail() != null) {
                     user.getSettings().setEmailAddress(userDialog.getEmail());
+                }
+                
+                if (userDialog.getExpirationDate() != null) {
+                    user.setExpirationDate(userDialog.getExpirationDate());
                 }
                 
                 user.setRole(userDialog.getRole());

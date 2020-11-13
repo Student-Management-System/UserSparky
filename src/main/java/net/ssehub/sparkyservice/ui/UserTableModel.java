@@ -17,9 +17,10 @@ class UserTableModel extends AbstractTableModel {
         FULL_NAME(1, "Full Name"),
         EMAIL(2, "E-Mail"),
         ROLE(3, "Role"),
-        REALM(4, "Realm");
+        REALM(4, "Realm"),
+        EXPIRATION_DATE(5, "Expiration Date");
         
-        public static final int MAX_INDEX = 4;
+        public static final int MAX_INDEX = 5;
         
         private int index;
         
@@ -123,6 +124,11 @@ class UserTableModel extends AbstractTableModel {
             case REALM:
                 result = user.getRealm().getValue();
                 break;
+            case EXPIRATION_DATE:
+                if (user.getExpirationDate() != null) {
+                    result = user.getExpirationDate().getDayOfMonth() + "." + user.getExpirationDate().getMonthValue() 
+                            + "." + user.getExpirationDate().getYear();
+                }
             }
         }
         
