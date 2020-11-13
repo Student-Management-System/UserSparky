@@ -4,6 +4,7 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.Calendar;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -108,7 +109,7 @@ public class UserDialog extends JDialog {
         position.anchor = GridBagConstraints.CENTER;
         content.add(new JLabel("Expiration Date"), position);
         
-        this.expirationDate = new JTextField("z.B. 2021-01-31",FIELD_WIDTH);
+        this.expirationDate = new JTextField(defaultExpirationDate(), FIELD_WIDTH);
         position.anchor = GridBagConstraints.CENTER;
         content.add(this.expirationDate, position);
         
@@ -207,6 +208,19 @@ public class UserDialog extends JDialog {
     
     public boolean isSubmitted() {
         return this.submitted;
+    }
+    
+    private String defaultExpirationDate() {
+        String defaultExpirationDate;
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        int month = Calendar.getInstance().get(Calendar.MONTH);
+        
+        if (month >= 3 && month <= 8) {
+            defaultExpirationDate = year + 1 + "-09-30";
+        } else {
+            defaultExpirationDate = year + 1 + "-03-31";
+        }
+        return defaultExpirationDate;
     }
     
 }
