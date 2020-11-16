@@ -112,8 +112,11 @@ public class UserDialog extends JDialog {
         this.expirationDate = new JTextField(defaultExpirationDate(), FIELD_WIDTH);
         position.anchor = GridBagConstraints.CENTER;
         content.add(this.expirationDate, position);
-        
         position.gridy++;
+        
+        if (expirationDate.getText().isEmpty()) {
+            System.out.println("Leer");
+        }
         
         position.anchor = GridBagConstraints.BASELINE_TRAILING;
         content.add(new JLabel("Role:"), position);
@@ -164,7 +167,17 @@ public class UserDialog extends JDialog {
                         JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             }
             
-            if (result == JOptionPane.YES_OPTION) {
+            int correctExpirationDateFormat = JOptionPane.YES_OPTION;
+            if (expirationDate.getText().isEmpty() || !expirationDate.getText().matches("\\d{4}[-]\\d{2}[-]\\d{2}")) {
+                correctExpirationDateFormat = JOptionPane.showConfirmDialog(this, 
+                        "Uncorrect Date Format, expected Format is YYYY-MM-DD, set Expiration Date to end of semester?", 
+                        "Wrong Date Format", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+                if (correctExpirationDateFormat == JOptionPane.YES_OPTION) {
+                    expirationDate.setText(defaultExpirationDate());
+                }
+            }
+            
+            if (result == JOptionPane.YES_OPTION && correctExpirationDateFormat == JOptionPane.YES_OPTION) {
                 submitted = true;
                 dispose();
             }
