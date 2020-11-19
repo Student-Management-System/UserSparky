@@ -4,6 +4,8 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import javax.swing.JButton;
@@ -168,12 +170,25 @@ public class UserDialog extends JDialog {
             }
             
             int correctExpirationDateFormat = JOptionPane.YES_OPTION;
+            // check for correct date format
             if (expirationDate.getText().isEmpty() || !expirationDate.getText().matches("\\d{4}[-]\\d{2}[-]\\d{2}")) {
                 correctExpirationDateFormat = JOptionPane.showConfirmDialog(this, 
                         "Uncorrect Date Format, expected Format is YYYY-MM-DD, set Expiration Date to end of semester?", 
-                        "Wrong Date Format", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+                        "Wrong Date Format", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (correctExpirationDateFormat == JOptionPane.YES_OPTION) {
                     expirationDate.setText(defaultExpirationDate());
+                }
+            } else {
+                // check if date exists
+                SimpleDateFormat format = new SimpleDateFormat("YYYY-MM-DD");
+                format.setLenient(false);
+                try {
+                    format.parse(expirationDate.getText());
+                } catch (ParseException e) {
+                    correctExpirationDateFormat = JOptionPane.showConfirmDialog(this, 
+                            "The Date " + expirationDate.getText() 
+                            + " does not exist, instead set Expiration Date to end of semester?", 
+                            "Not existing Date", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 }
             }
             
