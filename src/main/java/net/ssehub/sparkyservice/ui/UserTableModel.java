@@ -1,10 +1,16 @@
 package net.ssehub.sparkyservice.ui;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
+import net.ssehub.studentmgmt.backend_api.ApiClient;
+import net.ssehub.studentmgmt.backend_api.ApiException;
+import net.ssehub.studentmgmt.backend_api.api.UsersApi;
+import net.ssehub.studentmgmt.backend_api.model.UserDto.RoleEnum;
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto;
 
 class UserTableModel extends AbstractTableModel {
@@ -18,14 +24,15 @@ class UserTableModel extends AbstractTableModel {
         EMAIL(2, "E-Mail"),
         ROLE(3, "Role"),
         REALM(4, "Realm"),
-        EXPIRATION_DATE(5, "Expiration Date");
+        EXPIRATION_DATE(5, "Expiration Date"),
+        STUDENT_MANAGEMENT_SYSTEN(6, "Student-Management System");
         
-        public static final int MAX_INDEX = 5;
+        public static final int MAX_INDEX = 6;
         
         private int index;
         
         private String name;
-        
+                
         private Column(int index, String name) {
             this.index = index;
             this.name = name;
@@ -54,12 +61,18 @@ class UserTableModel extends AbstractTableModel {
     
     private List<UserDto> users = new LinkedList<>();
     
+    private UsersApi usersApi;
+    
     private boolean isValidRow(int rowIndex) {
         return rowIndex >= 0 && rowIndex < users.size();
     }
     
     private boolean isValidColumn(int columnIndex) {
         return columnIndex >= 0 && columnIndex <= Column.MAX_INDEX;
+    }
+    
+    public void initializeUsersApi(ApiClient apiClient) {      
+        this.usersApi = new UsersApi(apiClient);
     }
     
     public void addUser(UserDto user) {
@@ -129,10 +142,36 @@ class UserTableModel extends AbstractTableModel {
                     result = user.getExpirationDate().getDayOfMonth() + "." + user.getExpirationDate().getMonthValue() 
                             + "." + user.getExpirationDate().getYear();
                 }
+                break;
+            case STUDENT_MANAGEMENT_SYSTEN:
+                result = checkStudentmgmtLogin(user.getUsername(), user.getFullName());
+                break;
             }
         }
         
         return result;
+    }
+    
+    private String checkStudentmgmtLogin(String username, String displayName) {
+        String login;
+        List <String> role = new ArrayList<>();
+        role.add(RoleEnum.USER.toString());
+        List<net.ssehub.studentmgmt.backend_api.model.UserDto> dto = new ArrayList<>();
+        
+        try {
+            dto = usersApi.getUsers(new BigDecimal(0), 
+                    new BigDecimal(1), username, displayName, role);
+        } catch (ApiException e) {
+            e.printStackTrace();
+        }
+        
+        if (dto.isEmpty()) {
+            login = "false";
+        } else {
+            login = "true";
+        }
+        
+        return login;
     }
     
 }
