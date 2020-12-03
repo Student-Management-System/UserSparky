@@ -1,12 +1,12 @@
 package net.ssehub.sparkyservice.ui;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -17,9 +17,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
 
-import org.threeten.bp.LocalDate;
-
+import net.ssehub.sparkyservice.util.TimeUtils;
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto;
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto.RealmEnum;
 import net.ssehub.studentmgmt.sparkyservice_api.model.UserDto.RoleEnum;
@@ -41,6 +41,8 @@ public class UserDialog extends JDialog {
     private JTextField email;
     
     private JTextField expirationDate;
+    
+    private LocalDate expirationDateParsed;
     
     private JComboBox<RoleEnum> role;
     
@@ -108,13 +110,39 @@ public class UserDialog extends JDialog {
         
         position.gridy++;
         
-        position.anchor = GridBagConstraints.CENTER;
-        content.add(new JLabel("Expiration Date"), position);
+        position.anchor = GridBagConstraints.BASELINE_TRAILING;
+        content.add(new JLabel("Expiration:"), position);
         
-        this.expirationDate = new JTextField(defaultExpirationDate(), FIELD_WIDTH);
+        this.expirationDate = new JTextField(FIELD_WIDTH);
+        if (user != null) {
+            if (user.getExpirationDate() != null) {
+                this.expirationDate.setText(TimeUtils.convert(user.getExpirationDate()).toString());
+            }
+        } else {
+            this.expirationDate.setText(TimeUtils.lastDayOfTerm(LocalDate.now()).toString());
+        }
+        this.expirationDate.setToolTipText("Expiration date of user; leave empty for no expiration");
         position.anchor = GridBagConstraints.CENTER;
         content.add(this.expirationDate, position);
         position.gridy++;
+        
+        this.expirationDate.getDocument().addDocumentListener(new DocumentChangeListener() {
+            
+            @Override
+            public void onChange(DocumentEvent evt) {
+                String text = expirationDate.getText().trim();
+                
+                try {
+                    expirationDateParsed = LocalDate.parse(text);
+                    expirationDate.setForeground(null);
+                    
+                } catch (DateTimeParseException e) {
+                    expirationDateParsed = null;
+                    expirationDate.setForeground(Color.RED);
+                }
+            }
+            
+        });
         
         position.anchor = GridBagConstraints.BASELINE_TRAILING;
         content.add(new JLabel("Role:"), position);
@@ -165,30 +193,14 @@ public class UserDialog extends JDialog {
                         JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             }
             
-            int correctExpirationDateFormat = JOptionPane.YES_OPTION;
-            // check for correct date format
-            if (expirationDate.getText().isEmpty() || !expirationDate.getText().matches("\\d{4}[-]\\d{2}[-]\\d{2}")) {
-                correctExpirationDateFormat = JOptionPane.showConfirmDialog(this, 
-                        "Uncorrect Date Format, expected Format is YYYY-MM-DD, set Expiration Date to end of semester?", 
-                        "Wrong Date Format", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                if (correctExpirationDateFormat == JOptionPane.YES_OPTION) {
-                    expirationDate.setText(defaultExpirationDate());
-                }
-            } else {
-                // check if date exists
-                SimpleDateFormat format = new SimpleDateFormat("YYYY-MM-DD");
-                format.setLenient(false);
-                try {
-                    format.parse(expirationDate.getText());
-                } catch (ParseException e) {
-                    correctExpirationDateFormat = JOptionPane.showConfirmDialog(this, 
-                            "The Date " + expirationDate.getText() 
-                            + " does not exist, instead set Expiration Date to end of semester?", 
-                            "Not existing Date", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-                }
+            
+            if (result == JOptionPane.YES_OPTION && !expirationDate.getText().isEmpty() && expirationDateParsed == null) {
+                JOptionPane.showMessageDialog(this, "Expiration date is not valid, expected format: yyyy-mm-dd",
+                        "Invalid Expiration Date", JOptionPane.ERROR_MESSAGE);
+                result = JOptionPane.NO_OPTION;
             }
             
-            if (result == JOptionPane.YES_OPTION && correctExpirationDateFormat == JOptionPane.YES_OPTION) {
+            if (result == JOptionPane.YES_OPTION) {
                 submitted = true;
                 dispose();
             }
@@ -222,8 +234,7 @@ public class UserDialog extends JDialog {
     }
     
     public LocalDate getExpirationDate() {
-        LocalDate expirationDate = LocalDate.parse(this.expirationDate.getText());
-        return expirationDate;
+        return expirationDateParsed;
     }
     
     public RoleEnum getRole() {
@@ -232,19 +243,6 @@ public class UserDialog extends JDialog {
     
     public boolean isSubmitted() {
         return this.submitted;
-    }
-    
-    private String defaultExpirationDate() {
-        String defaultExpirationDate;
-        int year = Calendar.getInstance().get(Calendar.YEAR);
-        int month = Calendar.getInstance().get(Calendar.MONTH);
-        
-        if (month >= 3 && month <= 8) {
-            defaultExpirationDate = year + 1 + "-09-30";
-        } else {
-            defaultExpirationDate = year + 1 + "-03-31";
-        }
-        return defaultExpirationDate;
     }
     
 }

@@ -29,10 +29,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.TableRowSorter;
 
 import net.ssehub.sparkyservice.ui.UserTableModel.Column;
+import net.ssehub.sparkyservice.util.TimeUtils;
 import net.ssehub.studentmgmt.backend_api.api.AuthenticationApi;
 import net.ssehub.studentmgmt.backend_api.model.AuthSystemCredentials;
 import net.ssehub.studentmgmt.backend_api.model.AuthTokenDto;
@@ -177,30 +177,17 @@ public class UserSparkyWindow extends JFrame {
         filterPanel.add(filterField, BorderLayout.CENTER);
         filterField.setToolTipText("Filters in columns " + Column.USERNAME.getName() + ", "
                     + Column.FULL_NAME.getName() + ", and " + Column.EMAIL.getName() + " (case-insensitive)");
-        filterField.getDocument().addDocumentListener(new DocumentListener() {
+        filterField.getDocument().addDocumentListener(new DocumentChangeListener() {
             
-            private void updateFilter() {
+            @Override
+            public void onChange(DocumentEvent e) {
                 String filterStr = filterField.getText().trim();
                 if (!filterStr.isEmpty()) {
                     userTableSorter.setRowFilter(new SubstringRowFilter(filterStr));
                 } else {
                     userTableSorter.setRowFilter(null);
                 }
-            }
-            
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateFilter();
-            }
-            
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateFilter();
-            }
-            
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateFilter();
+                
             }
             
         });
@@ -334,7 +321,9 @@ public class UserSparkyWindow extends JFrame {
         }
         
         if (userDialog.getExpirationDate() != null) {
-            user.setExpirationDate(userDialog.getExpirationDate());
+            user.setExpirationDate(TimeUtils.convert(userDialog.getExpirationDate()));
+        } else {
+            user.setExpirationDate(null);
         }
         
         user.setRole(userDialog.getRole());
@@ -374,7 +363,9 @@ public class UserSparkyWindow extends JFrame {
                 }
                 
                 if (userDialog.getExpirationDate() != null) {
-                    user.setExpirationDate(userDialog.getExpirationDate());
+                    user.setExpirationDate(TimeUtils.convert(userDialog.getExpirationDate()));
+                } else {
+                    user.setExpirationDate(null);
                 }
                 
                 user.setRole(userDialog.getRole());
