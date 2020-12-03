@@ -37,7 +37,7 @@ public class TimeUtils {
         case WINTER:
             int year = date.getYear();
             // check if end of semester will be next year
-            if (date.getMonth().compareTo(Month.OCTOBER) >= 1) {
+            if (date.getMonth().compareTo(Month.OCTOBER) >= 0) {
                 year++;
             }
             result = LocalDate.of(year, Month.MARCH, Month.MARCH.length(LocalDate.of(year, 1, 1).isLeapYear()));
