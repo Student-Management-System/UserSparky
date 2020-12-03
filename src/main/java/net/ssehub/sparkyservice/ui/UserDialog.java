@@ -116,10 +116,6 @@ public class UserDialog extends JDialog {
         content.add(this.expirationDate, position);
         position.gridy++;
         
-        if (expirationDate.getText().isEmpty()) {
-            System.out.println("Leer");
-        }
-        
         position.anchor = GridBagConstraints.BASELINE_TRAILING;
         content.add(new JLabel("Role:"), position);
         
