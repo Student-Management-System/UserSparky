@@ -33,9 +33,6 @@ import javax.swing.table.TableRowSorter;
 
 import net.ssehub.sparkyservice.ui.UserTableModel.Column;
 import net.ssehub.sparkyservice.util.TimeUtils;
-import net.ssehub.studentmgmt.backend_api.api.AuthenticationApi;
-import net.ssehub.studentmgmt.backend_api.model.AuthSystemCredentials;
-import net.ssehub.studentmgmt.backend_api.model.AuthTokenDto;
 import net.ssehub.studentmgmt.sparkyservice_api.ApiClient;
 import net.ssehub.studentmgmt.sparkyservice_api.ApiException;
 import net.ssehub.studentmgmt.sparkyservice_api.api.AuthControllerApi;
@@ -52,8 +49,6 @@ public class UserSparkyWindow extends JFrame {
     
     private static final String BASE_TITLE = "UserSparky";
     
-    private static final String MANAGEMENT_SERVER_URL = "http://147.172.178.30:3000";
-    
     private ApiClient apiClient;
     
     private String apiToken;
@@ -69,13 +64,6 @@ public class UserSparkyWindow extends JFrame {
     private TableRowSorter<UserTableModel> userTableSorter;
     
     private JProgressBar progressbar;
-    
-    private net.ssehub.studentmgmt.backend_api.ApiClient stdMgmtClient;
-    
-    private AuthenticationApi mgmtAuthApi;
-    
-    private String managementToken;
-    
     
     public UserSparkyWindow() {
         ActionListener editUserAction = (event) -> {
@@ -383,11 +371,6 @@ public class UserSparkyWindow extends JFrame {
         this.apiClient.setBasePath(apiUrl);
         this.authApi = new AuthControllerApi(apiClient);
         this.userApi = new UserControllerApi(apiClient);
-        
-        // Student-Management Backend
-        this.stdMgmtClient = new net.ssehub.studentmgmt.backend_api.ApiClient();
-        this.stdMgmtClient.setBasePath(MANAGEMENT_SERVER_URL);
-        this.mgmtAuthApi =  new AuthenticationApi(stdMgmtClient);
     }
     
     public void login() {
@@ -408,18 +391,6 @@ public class UserSparkyWindow extends JFrame {
             (authResult) -> {
                 this.apiToken = authResult.getToken().getToken();
                 this.apiClient.setAccessToken(this.apiToken);
-                
-                // Student-Management System token
-                AuthSystemCredentials tokenAsJson = new AuthSystemCredentials();
-                tokenAsJson.setToken(this.apiToken);
-                try {
-                    AuthTokenDto authToken = mgmtAuthApi.loginWithToken(tokenAsJson);
-                    this.managementToken = authToken.getAccessToken();
-                    this.stdMgmtClient.setAccessToken(this.managementToken);
-                } catch (net.ssehub.studentmgmt.backend_api.ApiException e) {
-                    e.printStackTrace();
-                }
-                this.userTableModel.initializeUsersApi(stdMgmtClient);
                 
                 setTitle(BASE_TITLE + " - " + loginDialog.getApiUrl());
                 reloadUserTable();
