@@ -31,6 +31,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.TableRowSorter;
 
+import com.google.gson.JsonParseException;
+
 import net.ssehub.sparkyservice.ui.UserTableModel.Column;
 import net.ssehub.sparkyservice.util.TimeUtils;
 import net.ssehub.studentmgmt.sparkyservice_api.ApiClient;
@@ -245,7 +247,7 @@ public class UserSparkyWindow extends JFrame {
                     successCallback.onSuccess(result);
                 });
                 
-            } catch (ApiException | IllegalArgumentException e) {
+            } catch (ApiException | IllegalArgumentException | JsonParseException e) {
                 onOperationStopped();
                 ExceptionDialog.showExceptionDialog(e, this);
                 if (failureCallback != null) {
