@@ -126,7 +126,7 @@ public class UserDialog extends JDialog {
         content.add(this.expirationDate, position);
         position.gridy++;
         
-        this.expirationDate.getDocument().addDocumentListener(new DocumentChangeListener() {
+        DocumentChangeListener listener = new DocumentChangeListener() {
             
             @Override
             public void onChange(DocumentEvent evt) {
@@ -142,7 +142,9 @@ public class UserDialog extends JDialog {
                 }
             }
             
-        });
+        };
+        this.expirationDate.getDocument().addDocumentListener(listener);
+        listener.onChange(null);
         
         position.anchor = GridBagConstraints.BASELINE_TRAILING;
         content.add(new JLabel("Role:"), position);
